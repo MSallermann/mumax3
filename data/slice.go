@@ -205,7 +205,10 @@ func (s *Slice) HostCopy() *Slice {
 }
 
 func Copy(dst, src *Slice) {
-	if dst.NComp() != src.NComp() || dst.Len() != src.Len() {
+	// if dst.NComp() != src.NComp() || dst.Len() != src.Len() {
+	// 	panic(fmt.Sprintf("slice copy: illegal sizes: dst: %vx%v, src: %vx%v", dst.NComp(), dst.Len(), src.NComp(), src.Len()))
+	// }
+	if dst.NComp() != src.NComp() {
 		panic(fmt.Sprintf("slice copy: illegal sizes: dst: %vx%v, src: %vx%v", dst.NComp(), dst.Len(), src.NComp(), src.Len()))
 	}
 	d, s := dst.GPUAccess(), src.GPUAccess()

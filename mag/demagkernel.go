@@ -13,7 +13,7 @@ import (
 
 // Obtains the demag kernel either from cacheDir/ or by calculating (and then storing in cacheDir for next time).
 // Empty cacheDir disables caching.
-func DemagKernel(inputSize, pbc [3]int, cellsize [3]float64, accuracy float64, cacheDir string) (kernel [3][3]*data.Slice) {
+func DemagKernel(noi int, inputSize, pbc [3]int, cellsize [3]float64, accuracy float64, cacheDir string) (kernel [3][3]*data.Slice) {
 	timer.Start("kernel_init")
 	timer.Stop("kernel_init") // warm-up
 
@@ -36,11 +36,11 @@ func DemagKernel(inputSize, pbc [3]int, cellsize [3]float64, accuracy float64, c
 	}()
 
 	// Try to load kernel
-	basename := fmt.Sprint(cacheDir, "/", "mumax3kernel_", inputSize, "_", pbc, "_", cellsize, "_", accuracy, "_")
+	basename := fmt.Sprint(cacheDir, "/", "mumax3kernel_[", inputSize[X], inputSize[Y], inputSize[Z], "]_", pbc, "_", cellsize, "_", accuracy, "_")
 	var errLoad error
 	for i := 0; i < 3; i++ {
 		for j := i; j < 3; j++ {
-			if inputSize[Z] == 1 && ((i == X && j == Z) || (i == Y && j == Z)) {
+			if (inputSize[Z] == 1 || inputSize[Z] == noi) && ((i == X && j == Z) || (i == Y && j == Z)) {
 				continue // element not needed in 2D
 			}
 			kernel[i][j], errLoad = LoadKernel(fmt.Sprint(basename, i, j, ".ovf"))
@@ -75,7 +75,8 @@ func DemagKernel(inputSize, pbc [3]int, cellsize [3]float64, accuracy float64, c
 			compName := fmt.Sprint("N_", i, j)
 
 			info := data.Meta{Time: float64(0.0), Name: compName, Unit: "1", CellSize: cellsize, MeshUnit: "m"}
-			errSave = SaveKernel(fmt.Sprint(basename, i, j, ".ovf"), kernel[i][j], info)
+			basename = fmt.Sprint(cacheDir, "/", "mumax3kernel_[", inputSize[X], inputSize[Y], inputSize[Z]*noi, "]_", pbc, "_", cellsize, "_", accuracy, "_") ///for gneb!!!
+			errSave = SaveKernel(noi, fmt.Sprint(basename, i, j, ".ovf"), kernel[i][j], info)
 			if errSave != nil {
 				break
 			}
@@ -93,19 +94,57 @@ func DemagKernel(inputSize, pbc [3]int, cellsize [3]float64, accuracy float64, c
 	return kernel
 }
 
+func ImDemagKernel(noi int, gneb byte, inputSize, pbc [3]int, kernel [3][3]*data.Slice) (imkernel [3][3]*data.Slice) {
+	imSize := inputSize
+	if gneb == 1 || gneb == 2 {
+		imSize[Z] = imSize[Z] / noi
+	}
+	size := padSize(imSize, pbc)
+
+	// Allocate only upper diagonal part. The rest is symmetric due to reciprocity.
+	var array [3][3][][][]float32
+	for i := 0; i < 3; i++ {
+		for j := i; j < 3; j++ {
+			imkernel[i][j] = data.NewSlice(1, size)
+			array[i][j] = imkernel[i][j].Scalars()
+			// cuda.CopyKernel(imkernel[i][j],imkernel[i][j])
+		}
+	}
+
+	// for i := 0; i < 3; i++ {
+	// 	for j := i; j < 3; j++ {
+	// 		for xw := 0; xw < size[X]; xw++{
+	// 			for yw := 0; yw < size[Y]; yw++{
+	// 				for zw := 0; zw < size[Z]; zw++{
+	// 					array[i][j][zw][yw][xw] = kernel[i][j][zw][yw][xw]
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	return imkernel
+}
+
 func LoadKernel(fname string) (kernel *data.Slice, err error) {
 	kernel, _, err = oommf.ReadFile(fname)
 	return
 }
 
-func SaveKernel(fname string, kernel *data.Slice, info data.Meta) error {
+func SaveKernel(noi int, fname string, kernel *data.Slice, info data.Meta) error {
 	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
 	out := bufio.NewWriter(f)
 	defer out.Flush()
-	oommf.WriteOVF2(out, kernel, info, "binary 4")
+	// noi :=
+	if noi > 1 {
+		oommf.WriteOVF3(noi, out, kernel, info, "binary 4")
+	} else {
+		oommf.WriteOVF2(out, kernel, info, "binary 4")
+	}
+
 	return nil
 }
 

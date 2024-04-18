@@ -29,7 +29,7 @@ func testConvolution(c *DemagConvolution, PBC [3]int, realKern [3][3]*data.Slice
 	Memset(Msat, 1)
 
 	vol := data.NilSlice(1, c.inputSize)
-	c.Exec(gpu, gpu, vol, ToMSlice(Msat))
+	c.Exec(1, 0, gpu, gpu, gpu, vol, ToMSlice(Msat))
 
 	output := gpu.HostCopy()
 

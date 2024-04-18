@@ -51,9 +51,32 @@ func MaxVecNorm(v *data.Slice) float64 {
 	return math.Sqrt(float64(copyback(out)))
 }
 
+func MaxG1G2(v, b *data.Slice) float64 {
+	out := reduceBuf(0)
+	k_reducemaxvecnorm2gg_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), b.DevPtr(0), b.DevPtr(1), b.DevPtr(2), out, 0, v.Len(), reducecfg)
+	return math.Sqrt(float64(copyback(out)))
+}
+func TotalForce(src *data.Slice, noi int) float64 {
+	out := reduceBuf(0)
+	N := src.Size()
+	k_totalforce_async(src.DevPtr(0), out, 0, src.Len(), noi, N[Z], reducecfg)
+	return (math.Sqrt(float64(copyback(out))))
+}
+
+func GetReactioCoordinate(in *data.Slice, image, noi int) float32 {
+	util.Argument(in.NComp() == 1)
+	N := in.Size()
+
+	out1 := reduceBuf(0)
+
+	k_sumimage_async(in.DevPtr(0), out1, 0, in.Len(), image, noi, N[Z], reducecfg)
+	return (copyback(out1))
+}
+
 // Maximum of the norms of the difference between all vectors (x1,y1,z1) and (x2,y2,z2)
-// 	(dx, dy, dz) = (x1, y1, z1) - (x2, y2, z2)
-// 	max_i sqrt( dx[i]*dx[i] + dy[i]*dy[i] + dz[i]*dz[i] )
+//
+//	(dx, dy, dz) = (x1, y1, z1) - (x2, y2, z2)
+//	max_i sqrt( dx[i]*dx[i] + dy[i]*dy[i] + dz[i]*dz[i] )
 func MaxVecDiff(x, y *data.Slice) float64 {
 	util.Argument(x.Len() == y.Len())
 	out := reduceBuf(0)

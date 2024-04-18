@@ -18,6 +18,7 @@ import (
 func init() {
 	DeclFunc("Save", Save, "Save space-dependent quantity once, with auto filename")
 	DeclFunc("SaveAs", SaveAs, "Save space-dependent quantity with custom filename")
+	DeclFunc("SavePath", SavePath, "Save images separately")
 
 	DeclLValue("FilenameFormat", &fformat{}, "printf formatting string for output filenames.")
 	DeclLValue("OutputFormat", &oformat{}, "Format for data files: OVF1_TEXT, OVF1_BINARY, OVF2_TEXT or OVF2_BINARY")
@@ -73,6 +74,27 @@ func SaveAs(q Quantity, fname string) {
 	info := data.Meta{Time: Time, Name: NameOf(q), Unit: UnitOf(q), CellSize: MeshOf(q).CellSize()}
 	data := buffer.HostCopy() // must be copy (async io)
 	queOutput(func() { saveAs_sync(fname, data, info, outputFormat) })
+}
+
+// Save each image separately (GNEB)
+func SavePath(q Quantity, noi int) {
+	buffer := ValueOf(q)
+	defer cuda.Recycle(buffer)
+	info := data.Meta{Time: Time, Name: NameOf(q), Unit: UnitOf(q), CellSize: MeshOf(q).CellSize()}
+	data := buffer.HostCopy() // must be copy (async io)
+
+	for i := 0; i < noi; i++ {
+		fname := OD() + "image"
+		fname += fmt.Sprintf("%d.ovf", i)
+
+		f, err := httpfs.Create(fname)
+		util.FatalErr(err)
+		defer f.Close()
+
+		oommf.WritePathToOVF(f, data, info, noi, i)
+		print(fname, "\n")
+	}
+
 }
 
 // Save image once, with auto file name

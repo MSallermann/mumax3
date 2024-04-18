@@ -10,7 +10,7 @@ addexchange(float* __restrict__ Bx, float* __restrict__ By, float* __restrict__ 
             float* __restrict__ mx, float* __restrict__ my, float* __restrict__ mz,
             float* __restrict__ Ms_, float Ms_mul,
             float* __restrict__ aLUT2d, uint8_t* __restrict__ regions,
-            float wx, float wy, float wz, int Nx, int Ny, int Nz, uint8_t PBC) {
+            float wx, float wy, float wz, int Nx, int Ny, int Nz, uint8_t PBC, float JZ) {
 
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
     int iy = blockIdx.y * blockDim.y + threadIdx.y;
@@ -70,14 +70,14 @@ addexchange(float* __restrict__ Bx, float* __restrict__ By, float* __restrict__ 
         m_  = make_float3(mx[i_], my[i_], mz[i_]);
         m_  = ( is0(m_)? m0: m_ );
         a__ = aLUT2d[symidx(r0, regions[i_])];
-        B += wz * a__ *(m_ - m0);
+        B += JZ*wz * a__ *(m_ - m0);
 
         // top neighbor
         i_  = idx(ix, iy, hclampz(iz+1));
         m_  = make_float3(mx[i_], my[i_], mz[i_]);
         m_  = ( is0(m_)? m0: m_ );
         a__ = aLUT2d[symidx(r0, regions[i_])];
-        B += wz * a__ *(m_ - m0);
+        B += JZ*wz * a__ *(m_ - m0);
     }
 
     float invMs = inv_Msat(Ms_, Ms_mul, I);
@@ -85,4 +85,3 @@ addexchange(float* __restrict__ Bx, float* __restrict__ By, float* __restrict__ 
     By[I] += B.y*invMs;
     Bz[I] += B.z*invMs;
 }
-

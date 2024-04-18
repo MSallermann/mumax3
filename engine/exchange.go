@@ -1,7 +1,6 @@
 package engine
 
-// Exchange interaction (Heisenberg + Dzyaloshinskii-Moriya)
-// See also cuda/exchange.cu and cuda/dmi.cu
+// transforms Beff into Forces
 
 import (
 	"math"
@@ -30,6 +29,12 @@ var (
 	DindCoupling = NewScalarField("DindCoupling", "arb.", "Average DMI coupling with neighbors", dindDecode)
 
 	OpenBC = false
+	//gneb-related parameters
+	// GNEB2D = false
+	// GNEB3D = false
+	JZ = 1.0
+	// NumOfImages = NewScalarParam("NumOfImages", "dimless", "Number of Images", &NumOfImages)
+	// NumOfImages   exchParam // number of images
 )
 
 var AddExchangeEnergyDensity = makeEdensAdder(&B_exch, -0.5) // TODO: normal func
@@ -41,6 +46,9 @@ func init() {
 	DeclFunc("ext_ScaleDind", ScaleInterDind, "Re-scales Dind coupling between two regions.")
 	DeclFunc("ext_InterDind", InterDind, "Sets Dind coupling between two regions.")
 	DeclVar("OpenBC", &OpenBC, "Use open boundary conditions (default=false)")
+	// DeclVar("GNEB2D", &GNEB2D, "GNEB?")
+	// DeclVar("GNEB3D", &GNEB3D, "GNEB?")
+	DeclVar("JZ", &JZ, "JZ")
 	lex2.init(Aex)
 	din2.init(Dind)
 	dbulk2.init(Dbulk)
@@ -54,7 +62,7 @@ func AddExchangeField(dst *data.Slice) {
 	defer ms.Recycle()
 	switch {
 	case !inter && !bulk:
-		cuda.AddExchange(dst, M.Buffer(), lex2.Gpu(), ms, regions.Gpu(), M.Mesh())
+		cuda.AddExchange(dst, M.Buffer(), lex2.Gpu(), ms, regions.Gpu(), M.Mesh(), float32(JZ))
 	case inter && !bulk:
 		Refer("mulkers2017")
 		cuda.AddDMI(dst, M.Buffer(), lex2.Gpu(), din2.Gpu(), ms, regions.Gpu(), M.Mesh(), OpenBC) // dmi+exchange
@@ -192,8 +200,15 @@ func symmidx(i, j int) int {
 // (which is possible in the case of DMI), the geometric mean of the geometric and arithmetic mean is
 // used. This average is continuous everywhere, monotonic increasing, and bounded by the argument values.
 func exchAverage(exi, exj float32) float32 {
+
 	if exi*exj >= 0.0 {
-		return 2 / (1/exi + 1/exj)
+		if exi == 0 || exj == 0 {
+			return 0
+		} else {
+			return 2 / (1/exi + 1/exj)
+		}
+		// 		return 2.*exi*exj / (exi + exj)
+		// return 0.5*(exi + exj)
 	} else {
 		exi_, exj_ := float64(exi), float64(exj)
 		sign := math.Copysign(1, exi_+exj_)

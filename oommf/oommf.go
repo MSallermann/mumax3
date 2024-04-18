@@ -45,6 +45,77 @@ func Read(in io.Reader) (s *data.Slice, meta data.Meta, err error) {
 	return data_, data.Meta{Name: info.Title, Time: info.TotalTime, Unit: info.ValueUnit, CellSize: info.StepSize}, nil
 }
 
+// Read two ovf files and generate path by linear interpolation
+func ReadPath(in1, in2 io.Reader, noi int) (s *data.Slice, meta data.Meta, err error) {
+	info := readHeader(in1)
+
+	n := info.Size
+	n[Z] = n[Z] * noi
+	c := info.StepSize
+	if c == [3]float64{0, 0, 0} {
+		c = [3]float64{1, 1, 1} // default (presumably unitless) cell size
+	}
+	data_ := data.NewSlice(info.NComp, n)
+
+	info = readHeader(in2)
+	format := strings.ToLower(info.Format)
+	// ovf := info.OVF
+
+	if format == "binary 4" {
+		readOVFGNEB4(in1, in2, data_, noi, noi)
+	} else if format == "binary 8" {
+		readOVFGNEB8(in1, in2, data_, noi, noi)
+	} else {
+		print("invalid OVF2 format:", format, "\n")
+	}
+
+	// format = strings.ToLower(info.Format)
+	// ovf = info.OVF
+	// if(format == "binary 4" && ovf == 1){
+	// 	readOVFGNEB4(in2, data_, noi,1)
+	// }else if(format == "binary 8" && ovf == 2){
+	// 	readOVFGNEB8(in2, data_, noi,1)
+	// }else{
+	// 	print("invalid OVF2 format\n")
+	// }
+
+	info.Size[Z] = info.Size[Z] * noi
+	info.StepSize[Z] = info.StepSize[Z] * float64(1.0*noi)
+
+	return data_, data.Meta{Name: info.Title, Time: info.TotalTime, Unit: info.ValueUnit, CellSize: info.StepSize}, nil
+}
+
+// 	//in := fullReader{bufio.NewReader(in_)}
+// 	info := readHeader(in)
+
+// 	n := info.Size
+// 	c := info.StepSize
+// 	if c == [3]float64{0, 0, 0} {
+// 		c = [3]float64{1, 1, 1} // default (presumably unitless) cell size
+// 	}
+// 	data_ := data.NewSlice(info.NComp, n)
+
+// 	format := strings.ToLower(info.Format)
+// 	ovf := info.OVF
+
+// 	switch {
+// 	default:
+// 		panic(fmt.Sprint("unknown format: OVF", ovf, " ", format))
+// 	case format == "text":
+// 		readOVFDataText(in, data_)
+// 	case format == "binary 4" && ovf == 1:
+// 		readOVF1DataBinary4(in, data_)
+// 	case format == "binary 8" && ovf == 1:
+// 		readOVF1DataBinary8(in, data_)
+// 	case format == "binary 4" && ovf == 2:
+// 		readOVF2DataBinary4(in, data_)
+// 	case format == "binary 8" && ovf == 2:
+// 		readOVF2DataBinary8(in, data_)
+// 	}
+
+// 	return data_, data.Meta{Name: info.Title, Time: info.TotalTime, Unit: info.ValueUnit, CellSize: info.StepSize}, nil
+// }
+
 func ReadFile(fname string) (*data.Slice, data.Meta, error) {
 	f, err := os.Open(fname)
 	if err != nil {

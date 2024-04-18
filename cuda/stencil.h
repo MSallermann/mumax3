@@ -14,6 +14,10 @@
 #define PBCy (PBC & 2)
 #define PBCz (PBC & 4)
 
+#define GNEB2D (GNEB & 1)
+#define GNEB3D (GNEB & 2)
+
+
 // clamp or wrap index at boundary, depending on PBC
 // hclamp*: clamps on upper side (index+1)
 // lclamp*: clamps on lower side (index-1)
@@ -28,6 +32,11 @@
 #define hclampz(iz) (PBCz? MOD(iz, Nz) : min((iz), Nz-1))
 #define lclampz(iz) (PBCz? MOD(iz, Nz) : max((iz), 0))
 
+#define hclamp(i,n) (PBCz? MOD(i, n) : min((i), n-1))
+#define lclamp(i,n) (PBCz? MOD(i, n) : max((i), 0))
+
+// #define hclamp(i,n) ((i%n == (i-1+n)%n) ? max((i-1),0) : i)
+// #define lclamp(i,n) ((i%n == (i+1)%n ) ? min((i+1),n-1) : i)
 
 #endif
 

@@ -11,7 +11,14 @@ type Mesh struct {
 	cellSize [3]float64
 	pbc      [3]int
 	Unit     string // unit of cellSize, default: "m"
+	noi      int
+	gneb     [2]int
 }
+
+// Images stores info of a number of images.
+// type Images struct {
+// 	noi int
+// }
 
 // Retruns a new mesh with N0 x N1 x N2 cells of size cellx x celly x cellz.
 // Optional periodic boundary conditions (pbc): number of repetitions
@@ -26,7 +33,25 @@ func NewMesh(N0, N1, N2 int, cellx, celly, cellz float64, pbc ...int) *Mesh {
 		}
 	}
 	size := [3]int{N0, N1, N2}
-	return &Mesh{size, [3]float64{cellx, celly, cellz}, pbc3, "m"}
+	gneb := [2]int{0, 0}
+	return &Mesh{size, [3]float64{cellx, celly, cellz}, pbc3, "m", 1, gneb}
+}
+
+
+
+
+func NewMeshGneb(N0, N1, N2, noi, gneb2D, gneb3D int, cellx, celly, cellz float64, pbc ...int) *Mesh {
+	var pbc3 [3]int
+	if len(pbc) == 3 {
+		copy(pbc3[:], pbc)
+	} else {
+		if len(pbc) != 0 {
+			log.Panic("mesh: need 0 or 3 PBC arguments, got:", pbc)
+		}
+	}
+	size := [3]int{N0, N1, N2}
+	gneb := [2]int{gneb2D, gneb3D}
+	return &Mesh{size, [3]float64{cellx, celly, cellz}, pbc3, "m", noi, gneb}
 }
 
 // Returns N0, N1, N2, as passed to constructor.
@@ -38,6 +63,11 @@ func (m *Mesh) Size() [3]int {
 	}
 }
 
+// // Returns Number of Images as passed to constructor.
+func (m *Mesh) NumberOfImages() int {
+	return m.noi
+}
+
 // Returns cellx, celly, cellz, as passed to constructor.
 func (m *Mesh) CellSize() [3]float64 {
 	return m.cellSize
@@ -46,6 +76,12 @@ func (m *Mesh) CellSize() [3]float64 {
 // Returns pbc (periodic boundary conditions), as passed to constructor.
 func (m *Mesh) PBC() [3]int {
 	return m.pbc
+}
+func (m *Mesh) GNEB() [2]int {
+	return m.gneb
+}
+func (m *Mesh) SetGNEB(gneb2D, gneb3D int) {
+	m.gneb = [2]int{gneb2D, gneb3D}
 }
 
 func (m *Mesh) SetPBC(nx, ny, nz int) {
@@ -75,6 +111,17 @@ func (m *Mesh) PBC_code() byte {
 	}
 	if m.pbc[Z] != 0 {
 		code |= 4
+	}
+	return code
+}
+
+func (m *Mesh) GNEB_code() byte {
+	var code byte
+	if m.gneb[X] != 0 {
+		code = 1
+	}
+	if m.gneb[Y] != 0 {
+		code |= 2
 	}
 	return code
 }

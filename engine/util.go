@@ -26,6 +26,7 @@ func init() {
 	DeclConst("Mu0", mag.Mu0, "Vacuum permeability (Tm/A)")
 	DeclFunc("Print", myprint, "Print to standard output")
 	DeclFunc("LoadFile", LoadFile, "Load a data file (ovf or dump)")
+	DeclFunc("InterpolatePath", InterpolatePath, "Interpolate path between two states")
 	DeclFunc("Index2Coord", Index2Coord, "Convert cell index to x,y,z coordinate in meter")
 	DeclFunc("NewSlice", NewSlice, "Makes a 4D array with a specified number of components (first argument) "+
 		"and a specified size nx,ny,nz (remaining arguments)")
@@ -91,6 +92,23 @@ func LoadFile(fname string) *data.Slice {
 		s, _, err = oommf.Read(in)
 	}
 	util.FatalErr(err)
+	return s
+}
+
+// Read a magnetization state from .dump file.
+func InterpolatePath(fname1, fname2 string, noi int) *data.Slice {
+	in1, err1 := httpfs.Open(fname1)
+	util.FatalErr(err1)
+	in2, err2 := httpfs.Open(fname2)
+	util.FatalErr(err2)
+	var s *data.Slice
+	s, _, err1 = oommf.ReadPath(in1, in2, noi)
+	// if path.Ext(fname1) == ".dump" {
+	// 	s, _, err = dump.Read(in1)
+	// } else {
+	// 	s, _, err = oommf.ReadPath(in1,in2,noi)
+	// }
+	util.FatalErr(err1)
 	return s
 }
 

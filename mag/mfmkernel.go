@@ -49,7 +49,7 @@ func MFMKernel(mesh *d.Mesh, lift, tipsize float64, cacheDir string) (kernel [3]
 	for i := 0; i < 3; i++ {
 		compName := fmt.Sprint("Nmfm_", i)
 		info := d.Meta{Time: float64(0.0), Name: compName, Unit: "1", CellSize: mesh.CellSize(), MeshUnit: "m"}
-		errSave = SaveKernel(fmt.Sprint(basename, i, ".ovf"), kernel[i], info)
+		errSave = SaveKernel(0, fmt.Sprint(basename, i, ".ovf"), kernel[i], info)
 		if errSave != nil {
 			break
 		}

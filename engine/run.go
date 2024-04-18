@@ -115,6 +115,21 @@ func setMaxTorque(τ *data.Slice) {
 	LastTorque = cuda.MaxVecNorm(τ)
 }
 
+func setMaxDot(m, b *data.Slice) {
+	LastTorque = cuda.MaxG1G2(m, b)
+}
+func setTotalForce(dst *data.Slice, noi int) {
+	LastTorque = cuda.TotalForce(dst, noi)
+}
+
+func setForce(force float32) {
+	LastTorque = float64(force)
+}
+
+func getReactionCoordinate(mms *data.Slice, image, noi int) float32 {
+	return cuda.GetReactioCoordinate(mms, image, noi)
+}
+
 // adapt time step: dt *= corr, but limited to sensible values.
 func adaptDt(corr float64) {
 	if FixDt != 0 {

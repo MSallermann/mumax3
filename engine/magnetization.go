@@ -54,6 +54,9 @@ func (m *magnetization) Set(c Config) {
 func (m *magnetization) LoadFile(fname string) {
 	m.SetArray(LoadFile(fname))
 }
+func (m *magnetization) InterpolatePath(fname1, fname2 string, noi int) {
+	m.SetArray(InterpolatePath(fname1, fname2, noi))
+}
 
 func (m *magnetization) Slice() (s *data.Slice, recycle bool) {
 	return m.Buffer(), false
