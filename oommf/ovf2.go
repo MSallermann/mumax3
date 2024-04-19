@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 	"unsafe"
+	"math"
 )
 
 func WriteOVF2(out io.Writer, q *data.Slice, meta data.Meta, dataformat string) {
