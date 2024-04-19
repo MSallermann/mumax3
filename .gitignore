@@ -1,3 +1,6 @@
+*_wrapper.go
+*.ptx
+
 *.swp
 *.swo
 *.5
