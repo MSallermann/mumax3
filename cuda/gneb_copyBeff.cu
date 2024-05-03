@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "float3.h"
 
-
+//hello
 extern "C" __global__ void
 copyBeff(float* __restrict__  Bx2,  float* __restrict__  By2,  float* __restrict__  Bz2,
         float* __restrict__  Bx,  float* __restrict__  By,  float* __restrict__  Bz,
