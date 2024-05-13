@@ -11,7 +11,7 @@
 // See gneb.go for more details.
 
 
-
+// this needs to be fixed
 
 extern "C" __global__ void
 tangent(float* __restrict__ Tx, float* __restrict__ Ty, float* __restrict__ Tz,
