@@ -107,7 +107,6 @@ func init() {
 type VPOminimizer struct {
 	k   *data.Slice // torque saved to calculate time step
 	vel *data.Slice // torque saved to calculate time step
-
 }
 
 func (mini *VPOminimizer) Step() {
@@ -117,15 +116,11 @@ func (mini *VPOminimizer) Step() {
 	m := M.Buffer()
 	size := m.Size()
 
-	// vel := cuda.Buffer(3, size)
-	// defer cuda.Recycle(vel)
-
 	m0 := cuda.Buffer(3, size)
 	defer cuda.Recycle(m0)
 
 	if mini.k == nil {
 		mini.k = cuda.Buffer(3, size)
-		// torqueFn(mini.k)
 		SetEffectiveField(mini.k)
 	}
 
@@ -138,21 +133,14 @@ func (mini *VPOminimizer) Step() {
 
 	vel := mini.vel
 
-	// save original magnetization
-	// m0 := cuda.Buffer(3, size)
-	// defer cuda.Recycle(m0)
-	// data.Copy(m0, m)
-
-	//previous force
+	// previous force
 	k0 := cuda.Buffer(3, size)
 	defer cuda.Recycle(k0)
 
-	vf1 := cuda.Buffer(1, size)
-	defer cuda.Recycle(vf1)
 	ff1 := cuda.Buffer(1, size)
 	defer cuda.Recycle(ff1)
 
-	////calculation energies? here
+	// calculation energies? here
 	gneb := M.Mesh().GNEB_code()
 	noi := M.Mesh().NumberOfImages()
 	Nz := m.Size()[Z]
@@ -167,7 +155,7 @@ func (mini *VPOminimizer) Step() {
 		Distance := make([]float32, noi)
 		TangentP := make([]float32, noi)
 
-		//Eenrgies of each image
+		// Energies of each image
 		en := cuda.Buffer(1, size)
 		defer cuda.Recycle(en)
 
