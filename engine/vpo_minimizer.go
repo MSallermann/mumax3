@@ -111,6 +111,9 @@ type VPOminimizer struct {
 }
 
 func (mini *VPOminimizer) Step() {
+	util.AssertMsg(relaxing, "relaxing=True is required for VPO solver")
+	util.AssertMsg(!Precess, "Precess=False is required for VPO solver")
+
 	m := M.Buffer()
 	size := m.Size()
 
