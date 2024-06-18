@@ -64,6 +64,7 @@ const (
 	RUNGEKUTTA     = 4
 	DORMANDPRINCE  = 5
 	FEHLBERG       = 6
+	VPO            = 7
 )
 
 func SetSolver(typ int) {
@@ -88,6 +89,8 @@ func SetSolver(typ int) {
 		stepper = new(RK45DP)
 	case FEHLBERG:
 		stepper = new(RK56)
+	case VPO:
+		stepper = new(VPOminimizer)
 	}
 	solvertype = typ
 }
